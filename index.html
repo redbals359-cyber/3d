@@ -13,18 +13,19 @@
         }
         #info {
             position: absolute;
-            top: 10px;
+            top: 15px;
             width: 100%;
             text-align: center;
             color: #ffffff;
             font-size: 14px;
             pointer-events: none;
             text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+            z-index: 10;
         }
     </style>
 </head>
 <body>
-    <div id="info">Geser kursor / Sentuh layar untuk melihat efek kedalaman 3D</div>
+    <div id="info">Sentuh layar / Geser kursor untuk melihat efek 3D</div>
 
     <!-- Three.js Library dari CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -50,19 +51,19 @@
             renderer.setPixelRatio(window.devicePixelRatio);
             document.body.appendChild(renderer.domElement);
 
-            // Load Texture (Gambar yang kamu berikan)
+            // Load Texture menggunakan Image Objek & Canvas untuk memastikan kompatibilitas
             const textureLoader = new THREE.TextureLoader();
             
-            // Menggunakan data URL dari gambar yang diunggah
-            const imgDataUrl = "1000294000.png"; // Atau ganti dengan base64 / URL gambar
-
-            textureLoader.load(imgDataUrl, (texture) => {
+            // Mengambil gambar dari sumber yang ada
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            img.src = "1000294000.png"; // Jika di-hosting lokal/satu folder
+            
+            img.onload = function() {
+                const texture = new THREE.CanvasTexture(img);
                 texture.generateMipmaps = true;
-                
-                // Geometri dengan subdivision tinggi agar efek displacement halus
-                const geometry = new THREE.PlaneGeometry(4, 2.2, 64, 64);
 
-                // Material menggunakan MeshStandardMaterial dengan tekstur
+                const geometry = new THREE.PlaneGeometry(4, 2.2, 64, 64);
                 const material = new THREE.MeshStandardMaterial({
                     map: texture,
                     transparent: true,
@@ -73,24 +74,32 @@
 
                 plane = new THREE.Mesh(geometry, material);
                 scene.add(plane);
-            });
+            };
 
             // Lighting
-            const ambientLight = new THREE.AmbientLight(0xffffff, 1);
+            const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
             scene.add(ambientLight);
 
             const pointLight = new THREE.PointLight(0xfff5e6, 2, 50);
             pointLight.position.set(0, 2, 3);
             scene.add(pointLight);
 
-            // Event Listeners
+            // Event Listeners untuk Mouse & Touch (Mobile)
             document.addEventListener('mousemove', onDocumentMouseMove);
+            document.addEventListener('touchmove', onTouchMove, { passive: false });
             window.addEventListener('resize', onWindowResize);
         }
 
         function onDocumentMouseMove(event) {
             mouseX = (event.clientX - windowHalfX);
             mouseY = (event.clientY - windowHalfY);
+        }
+
+        function onTouchMove(event) {
+            if (event.touches.length > 0) {
+                mouseX = (event.touches[0].clientX - windowHalfX);
+                mouseY = (event.touches[0].clientY - windowHalfY);
+            }
         }
 
         function onWindowResize() {
